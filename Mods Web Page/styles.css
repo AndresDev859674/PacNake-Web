@@ -4,12 +4,12 @@ body {
     margin: 0;
     padding: 0;
     background-color: #f4f4f4;
-    color: #333;
+    color: rgb(48, 48, 48);
 }
 
 header {
-    background-color: #282c34;
-    color: white;
+    background-color: #f0f0f0;
+    color: rgb(48, 48, 48);
     padding: 20px;
     text-align: center;
 }
@@ -39,7 +39,7 @@ main {
 }
 
 h2 {
-    border-bottom: 2px solid #282c34;
+    border-bottom: 2px solid #c4c4c4;
     padding-bottom: 5px;
     margin-bottom: 10px;
     font-size: 1.5em;
@@ -75,8 +75,8 @@ a:hover {
 }
 
 footer {
-    background-color: #282c34;
-    color: white;
+    background-color: #f0f0f0;
+    color: rgb(48, 48, 48);
     padding: 10px;
     text-align: center;
     font-size: 0.9em;
@@ -100,6 +100,7 @@ code {
     }
 
     header {
+        color: rgb(255, 255, 255);
         background-color: #1f1f1f;
     }
 
@@ -117,6 +118,7 @@ code {
     }
 
     footer {
+        color: rgb(255, 255, 255);
         background-color: #1f1f1f;
     }
 
