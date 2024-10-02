@@ -25,6 +25,7 @@ header {
     color: rgb(48, 48, 48);
     padding: 20px;
     text-align: center;
+    border-radius: 8px; /* Borde redondeado para el encabezado */
 }
 
 h1 {
@@ -47,7 +48,7 @@ main {
     margin: auto;
     background-color: rgba(255, 255, 255, 0.9); /* Fondo semitransparente para mayor legibilidad */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
+    border-radius: 12px; /* Borde redondeado para el contenedor principal */
     margin-bottom: 60px; /* Añadir margen para evitar que el contenido se oculte detrás del pie de página */
 }
 
@@ -96,6 +97,7 @@ footer {
     position: fixed;
     width: 100%;
     bottom: 0;
+    border-radius: 12px 12px 0 0; /* Aumentar el redondeo en la parte superior */
 }
 
 code {
@@ -115,11 +117,13 @@ code {
     header {
         color: rgb(255, 255, 255);
         background-color: #1f1f1f;
+        border-radius: 8px; /* Borde redondeado */
     }
 
     main {
         background-color: #1e1e1e;
         color: #e0e0e0;
+        border-radius: 12px; /* Borde redondeado */
     }
 
     a {
@@ -133,5 +137,6 @@ code {
     footer {
         color: rgb(255, 255, 255);
         background-color: #1f1f1f;
+        border-radius: 12px 12px 0 0; /* Borde redondeado en la parte superior del pie de página */
     }
 }
