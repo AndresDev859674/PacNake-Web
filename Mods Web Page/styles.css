@@ -1,14 +1,27 @@
-/* General Styles */
+/* Importar la fuente Pixelify Sans desde el archivo local */
+@font-face {
+    font-family: 'Pixelify Sans';
+    src: url('PixelifySans-VariableFont_wght.ttf') format('truetype'); /* Cambiar la ruta según tu estructura */
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Aplicar la fuente Pixelify Sans a todo el cuerpo de la página */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Pixelify Sans', sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
+    background: url('background 854x480.jpg') no-repeat center center fixed; /* Añadir imagen de fondo */
+    background-size: cover; /* Asegura que la imagen cubra todo el fondo */
     color: rgb(48, 48, 48);
 }
 
+h1, h2, p, li, a {
+    font-family: 'Pixelify Sans', sans-serif; /* Asegurarse de que todos los elementos tengan la fuente */
+}
+
 header {
-    background-color: #f0f0f0;
+    background-color: rgba(240, 240, 240, 0.8); /* Fondo semitransparente para mayor legibilidad */
     color: rgb(48, 48, 48);
     padding: 20px;
     text-align: center;
@@ -32,10 +45,10 @@ main {
     padding: 20px;
     max-width: 900px;
     margin: auto;
-    background-color: white;
+    background-color: rgba(255, 255, 255, 0.9); /* Fondo semitransparente para mayor legibilidad */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
-    margin-bottom: 60px; /* Added margin to prevent content from being hidden behind the footer */
+    margin-bottom: 60px; /* Añadir margen para evitar que el contenido se oculte detrás del pie de página */
 }
 
 h2 {
@@ -75,7 +88,7 @@ a:hover {
 }
 
 footer {
-    background-color: #f0f0f0;
+    background-color: rgba(240, 240, 240, 0.8); /* Fondo semitransparente para mayor legibilidad */
     color: rgb(48, 48, 48);
     padding: 10px;
     text-align: center;
@@ -92,7 +105,7 @@ code {
     font-size: 0.9em;
 }
 
-/* Dark Mode Styles */
+/* Estilos para el modo oscuro */
 @media (prefers-color-scheme: dark) {
     body {
         background-color: #121212;
@@ -120,9 +133,5 @@ code {
     footer {
         color: rgb(255, 255, 255);
         background-color: #1f1f1f;
-    }
-
-    code {
-        background-color: #2e2e2e;
     }
 }
