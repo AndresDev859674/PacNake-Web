@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PacNake +</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #00ff4c;
+            background: #80ff66;
+        }
+
+        .game-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 850px;
+            border: 2px solid #333;
+            transition: all 0.3s ease-in-out;
+            border-radius: 20px;
+            position: relative;
+        }
+
+        .game-container:hover {
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            color: #333;
+            font-weight: bold;
+        }
+
+        #score {
+            font-size: 1em;
+            margin-top: 20px;
+            color: #333;
+        }
+
+        #game-over, #pause-menu {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            opacity: 0;
+            animation: fadeIn 1s forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -60%) scale(0.5);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: translate(-50%, -60%) scale(0.5);
+            }
+        }
+
+        #pause-menu button, #game-over button {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            background-color: #4CAF50;
+            color: white;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        #pause-menu button:hover, #game-over button:hover {
+            background-color: #45a049;
+        }
+
+        #pause-menu button:active, #game-over button:active {
+            transform: scale(0.95);
+        }
+
+        #nitro-bar {
+            margin-top: 20px;
+            height: 20px;
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid #333;
+        }
+
+        #nitro-fill {
+            height: 100%;
+            width: 0;
+            background-color: #4CAF50;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        canvas {
+            border: 3px solid #333;
+            background-color: #fff;
+            border-radius: 15px;
+        }
+
+        /* Dark mode */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
+                color: #e0e0e0;
+            }
+
+            .game-container {
+                background-color: #333;
+                color: white;
+                box-shadow: 0 10px 15px rgba(255, 255, 255, 0.1);
+                border: 2px solid #e0e0e0;
+                border-radius: 20px;
+            }
+
+            canvas {
+                border: 3px solid #e0e0e0;
+                border-radius: 15px;
+            }
+
+            #score {
+                color: #f0f0f0;
+            }
+
+            #game-over, #pause-menu {
+                background: rgba(0, 0, 0, 0.9);
+            }
+
+            #pause-menu button, #game-over button {
+                background-color: #5070ff;
+            }
+
+            #pause-menu button:hover, #game-over button:hover {
+                background-color: #7d95ff;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <canvas id="gameCanvas" width="854" height="480"></canvas>
+    <div id="game-info">
+        Puntuación: <span id="score">0</span>
+        <div id="nitro-bar">
+            <div id="nitro-fill"></div>
+        </div>
+    </div>
+    <div id="pause-menu">
+        <h2>¡Pausa!</h2>
+        <button onclick="resumeGame()">Reanudar Juego</button>
+        <button onclick="restartGame()">Reiniciar Juego</button>
+    </div>
+    <div id="game-over">
+        <h2>¡Game Over!</h2>
+        <p>Puntuación Final: <span id="final-score">0</span></p>
+        <p>Tiempo Jugado: <span id="play-time">0</span> segundos</p>
+        <button onclick="restartGame()">Reiniciar Juego</button>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const box = 50;
+    const canvasWidth = canvas.width / box;
+    const canvasHeight = canvas.height / box;
+
+    const snakeTexture = new Image();
+    snakeTexture.src = 'snake.png';
+
+    const foodTexture = new Image();
+    foodTexture.src = 'food.png';
+
+    const backgroundTexture = new Image();
+    backgroundTexture.src = 'background.jpg';
+
+    let snake, food, score, direction, nextDirection, startTime, gameOver, paused;
+    let gameInterval;
+    let nitroActive = false;
+    let nitroDuration = 5000; // Duración del nitro en milisegundos
+    let nitroRechargeTime = 10000; // Tiempo de recarga del nitro en milisegundos
+    let nitroFill = 0; // Porcentaje de la barra de nitro llena
+    let nitroStartTime = 0;
+    let nitroRechargeStart = Date.now();
+    const frameRate = 5;
+    const interval = 1000 / frameRate;
+
+    function initializeGame() {
+        snake = [{ x: 6 * box, y: 4 * box }];
+        food = generateFood();
+        score = 0;
+        direction = "RIGHT";
+        nextDirection = "RIGHT";
+        startTime = Date.now();
+        gameOver = false;
+        paused = false;
+        nitroActive = false;
+        nitroFill = 0;
+
+        document.getElementById("score").innerText = score;
+        document.getElementById("nitro-fill").style.width = "0%";
+        document.getElementById("game-over").style.display = "none";
+        document.getElementById("pause-menu").style.display = "none";
+        document.getElementById("game-over").style.opacity = 0;
+        document.getElementById("pause-menu").style.opacity = 0;
+        document.getElementById("game-over").style.animation = "none";
+        document.getElementById("pause-menu").style.animation = "none";
+
+        if (gameInterval) {
+            clearInterval(gameInterval);
+        }
+
+        gameInterval = setInterval(drawGame, interval);
+    }
+
+    function changeDirection(event) {
+        if (event.key === "ArrowLeft" || event.key === "a" || event.key === "A") {
+            if (direction !== "RIGHT") nextDirection = "LEFT";
+        }
+        if (event.key === "ArrowUp" || event.key === "w" || event.key === "W") {
+            if (direction !== "DOWN") nextDirection = "UP";
+        }
+        if (event.key === "ArrowRight" || event.key === "d" || event.key === "D") {
+            if (direction !== "LEFT") nextDirection = "RIGHT";
+        }
+        if (event.key === "ArrowDown" || event.key === "s" || event.key === "S") {
+            if (direction !== "UP") nextDirection = "DOWN";
+        }
+        if (event.key === " " && !gameOver) {
+            if (nitroFill >= 100 && !nitroActive) {
+                nitroActive = true;
+                nitroStartTime = Date.now();
+                document.getElementById("nitro-fill").style.width = "0%";
+            }
+        }
+        if (event.key === "Escape") {
+            if (paused) {
+                resumeGame();
+            } else if (!gameOver) {
+                pauseGame();
+            }
+        }
+    }
+
+    function updateDirection() {
+        if (direction !== nextDirection) {
+            direction = nextDirection;
+        }
+    }
+
+    function drawGame() {
+        if (paused) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(backgroundTexture, 0, 0, canvas.width, canvas.height);
+        drawSnake();
+        drawFood();
+
+        let snakeX = snake[0].x;
+        let snakeY = snake[0].y;
+
+        updateDirection();
+
+        if (direction === "LEFT") snakeX -= box;
+        if (direction === "UP") snakeY -= box;
+        if (direction === "RIGHT") snakeX += box;
+        if (direction === "DOWN") snakeY += box;
+
+        if (snakeX === food.x && snakeY === food.y) {
+            score++;
+            document.getElementById("score").innerText = score;
+            food = generateFood();
+        } else {
+            snake.pop();
+        }
+
+        let newHead = { x: snakeX, y: snakeY };
+
+        if (checkCollision(newHead)) {
+            endGame();
+            return;
+        }
+
+        snake.unshift(newHead);
+
+        if (nitroActive && (Date.now() - nitroStartTime > nitroDuration)) {
+            nitroActive = false;
+            nitroRechargeStart = Date.now();
+            document.getElementById("nitro-fill").style.width = "0%";
+        }
+
+        // Actualizar la barra de nitro
+        if (!nitroActive) {
+            let elapsedTime = Date.now() - nitroRechargeStart;
+            nitroFill = Math.min((elapsedTime / nitroRechargeTime) * 100, 100);
+            document.getElementById("nitro-fill").style.width = `${nitroFill}%`;
+        }
+
+        // Ajustar la velocidad del juego en función de si el nitro está activo
+        const speedMultiplier = nitroActive ? 0.5 : 1;
+        const adjustedInterval = interval * speedMultiplier;
+        clearInterval(gameInterval);
+        gameInterval = setInterval(drawGame, adjustedInterval);
+    }
+
+    function drawSnake() {
+        for (let i = 0; i < snake.length; i++) {
+            drawRotatedImage(snakeTexture, snake[i].x, snake[i].y, box, box, direction);
+        }
+    }
+
+    function drawFood() {
+        ctx.drawImage(foodTexture, food.x, food.y, box, box);
+    }
+
+    function drawRotatedImage(image, x, y, width, height, direction) {
+        ctx.save();
+        ctx.translate(x + width / 2, y + height / 2);
+        if (direction === "UP") {
+            ctx.rotate(-Math.PI / 2);
+        } else if (direction === "DOWN") {
+            ctx.rotate(Math.PI / 2);
+        } else if (direction === "LEFT") {
+            ctx.rotate(Math.PI);
+        }
+        ctx.drawImage(image, -width / 2, -height / 2, width, height);
+        ctx.restore();
+    }
+
+    function generateFood() {
+        let x = Math.floor(Math.random() * canvasWidth) * box;
+        let y = Math.floor(Math.random() * canvasHeight) * box;
+        return { x, y };
+    }
+
+    function checkCollision(head) {
+        return (
+            head.x < 0 ||
+            head.x >= canvas.width ||
+            head.y < 0 ||
+            head.y >= canvas.height ||
+            snake.some(segment => segment.x === head.x && segment.y === head.y)
+        );
+    }
+
+    function endGame() {
+        clearInterval(gameInterval);
+        gameOver = true;
+
+        const endTime = Date.now();
+        const playTime = Math.floor((endTime - startTime) / 1000);
+        document.getElementById("final-score").innerText = score;
+        document.getElementById("play-time").innerText = playTime;
+        document.getElementById("game-over").style.display = "block";
+        document.getElementById("game-over").style.animation = "fadeIn 1s forwards";
+    }
+
+    function restartGame() {
+        const gameOverElement = document.getElementById("game-over");
+        gameOverElement.style.animation = "fadeOut 1s forwards";
+        setTimeout(initializeGame, 1000);
+    }
+
+    function pauseGame() {
+        paused = true;
+        document.getElementById("pause-menu").style.display = "block";
+        document.getElementById("pause-menu").style.animation = "fadeIn 1s forwards";
+    }
+
+    function resumeGame() {
+        paused = false;
+        document.getElementById("pause-menu").style.animation = "fadeOut 1s forwards";
+        setTimeout(() => {
+            document.getElementById("pause-menu").style.display = "none";
+        }, 1000);
+    }
+
+    document.addEventListener("keydown", changeDirection);
+    initializeGame();
+</script>
+
+</body>
+</html>
