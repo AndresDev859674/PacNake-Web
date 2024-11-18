@@ -106,37 +106,3 @@ code {
     border-radius: 4px;
     font-size: 0.9em;
 }
-
-/* Estilos para el modo oscuro */
-@media (prefers-color-scheme: dark) {
-    body {
-        background-color: #121212;
-        color: #e0e0e0;
-    }
-
-    header {
-        color: rgb(255, 255, 255);
-        background-color: #1f1f1f;
-        border-radius: 8px; /* Borde redondeado */
-    }
-
-    main {
-        background-color: #1e1e1e;
-        color: #e0e0e0;
-        border-radius: 12px; /* Borde redondeado */
-    }
-
-    a {
-        color: #81a1c1;
-    }
-
-    a:hover {
-        color: #5e81ac;
-    }
-
-    footer {
-        color: rgb(255, 255, 255);
-        background-color: #1f1f1f;
-        border-radius: 12px 12px 0 0; /* Borde redondeado en la parte superior del pie de página */
-    }
-}
