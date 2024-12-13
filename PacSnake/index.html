@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PacSnake - Game</title>
+    <link rel="icon" href="pacman.png">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="menu active">
+        <div class="menu-logo">
+            <img src="./pacman-icon.png" alt="Pac-Man">
+            <h1>PacSnake</h1>
+        </div>
+        <button onclick="startGame()">Start Game</button>
+        <button onclick="showSettings()">Settings</button>
+    </div>
+
+    <div class="settings-menu">
+        <h1>Settings</h1>
+        <p>More Icon Size:</p>
+        <div class="toggle-button">
+            <span id="toggleIcon">🔴</span>
+            <button onclick="toggleIconSize()">Toggle OFF</button>
+        </div>
+        <div>
+            <p>Difficulty:</p>
+            <button onclick="setDifficulty('easy')">Easy</button>
+            <button onclick="setDifficulty('normal')">Normal</button>
+            <button onclick="setDifficulty('hard')">Hard</button>
+            <button onclick="setDifficulty('expert')">Expert</button>
+        </div>
+        <div>
+            <p>Client:</p>
+            <button onclick="restartPage()">Restart the Game (Page Reload)</button>
+        </div>
+        <div>
+            <p>Music:</p>
+            <button id="muteButton" onclick="toggleMute()">Mute Music</button>
+        </div>
+        <button onclick="backToMenu()">Back</button>
+    </div>      
+
+    <div class="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div class="info-panel">
+            <span>Score: <span id="score">0</span></span>
+            <span>Apples: <span id="apples">0</span></span>
+            <span>Time: <span id="time">0</span> s</span>
+            <button id="muteButton" onclick="toggleMute()">Mute Music</button>
+        </div>
+    </div>
+
+    <div class="pause-menu">
+        <h1>Paused</h1>
+        <button onclick="resumeGame()">Resume</button>
+        <button onclick="showMenu()">Main Menu</button>
+    </div>
+
+    <div class="game-over-menu">
+        <h1>Game Over</h1>
+        <p>Final Score: <span id="finalScore"></span></p>
+        <p>Time Played: <span id="finalTime"></span></p>
+        <p>Apples Eaten: <span id="finalApples"></span></p>
+        <button onclick="startGame()">Retry</button>
+        <button onclick="showMenu()">Main Menu</button>
+    </div>
+
+    <script src="script.js" defer></script>
+</body>
+</html>
