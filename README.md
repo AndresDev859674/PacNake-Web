@@ -1,5 +1,5 @@
-# PacNake-Web
-PacNake Web Site
+# PacSnake-Web
+PacSnake Web Site
 
 # What is
-This is the PacNake Web page. Here is all the html and etc.
+This is the PacSnake Web page. Here is all the html and etc.
