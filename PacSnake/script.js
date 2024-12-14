@@ -12,7 +12,7 @@ canvas.height = 480;
 let backgroundMusic, snake, direction, food, score, apples, startTime, gameInterval, isPaused, difficulty, iconSize, fps, isMuted, toggleState;
 
 // Música y sonidos
-backgroundMusic = new Audio('./Background.mp3');
+backgroundMusic = new Audio('./Force.mp3');
 backgroundMusic.loop = true;
 backgroundMusic.volume = 0.5;
 
@@ -25,24 +25,27 @@ eatSound.volume = 0.8;
 const gameOverSound = new Audio('./game-over.mp3');
 gameOverSound.volume = 0.8;
 
+const notificationSound = new Audio('./notification.mp3');
+notificationSound.volume = 0.7;
+
 // Inicialización
 isMuted = false;
 toggleState = false;
 
-// Inicia el juego
 function startGame() {
     document.title = "PacSnake - Game In Progress";
-  
+
     document.querySelector('.menu').classList.remove('active');
-    document.querySelector('.game-over-menu').classList.remove('active');
+    document.querySelector('.game-over-menu').classList.remove('active'); // Ocultar Game Over
     document.querySelector('.settings-menu').classList.remove('active');
     document.querySelector('.game-container').style.display = 'block';
 
-    // Reproducir la música si no está en mute
     if (!isMuted) {
+        backgroundMusic.currentTime = 0; // Reinicia la música desde el principio
         backgroundMusic.play();
     }
 
+    // Reiniciar variables del juego
     snake = [{ x: 10, y: 10 }];
     direction = { x: 1, y: 0 };
     food = generateFood();
@@ -52,14 +55,17 @@ function startGame() {
     startTime = Date.now();
     iconSize = toggleState ? 5.5 : 3.0;
 
-    setGameSpeed(); // Configura la velocidad del juego
+    setGameSpeed();
+
+    // Resetear la pantalla
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     document.getElementById('score').innerText = score;
     document.getElementById('apples').innerText = apples;
     document.getElementById('time').innerText = 0;
 
     if (gameInterval) clearInterval(gameInterval);
-    gameInterval = setInterval(updateGame, 1000 / fps); // Actualiza el juego a la velocidad adecuada
+    gameInterval = setInterval(updateGame, 1000 / fps);
 }
 
 // Configura la velocidad del juego según la dificultad
@@ -76,17 +82,21 @@ function generateFood() {
     };
 }
 
-// Alternar sonido
 function toggleMute() {
     isMuted = !isMuted;
+    backgroundMusic.muted = isMuted;
+
+    // Actualizar estilo del botón
+    const muteButton = document.getElementById('muteButton');
     if (isMuted) {
-        backgroundMusic.pause(); // Pausar la música si está en mute
-        document.getElementById('muteButton').innerText = 'Unmute Music';
+        muteButton.innerText = 'Unmute Music';
+        muteButton.classList.remove('active');
     } else {
-        backgroundMusic.play(); // Reproducir la música si no está en mute
-        document.getElementById('muteButton').innerText = 'Mute Music';
+        muteButton.innerText = 'Mute Music';
+        muteButton.classList.add('active');
     }
 }
+
 
 // Alterna el tamaño del ícono
 function toggleIconSize() {
@@ -104,48 +114,62 @@ function toggleIconSize() {
         toggleIcon.innerText = '🔴';
     }
 
+    notificationSound.play().catch(console.error); // Solo notificación
     showMessage("Icon Size Updated", `Icon size set to: ${toggleState ? 'Large' : 'Small'}`);
 }
 
 // Establece la dificultad del juego
 function setDifficulty(level) {
+    notificationSound.play().catch(console.error); // Solo notificación
     difficulty = level; // Actualizar la dificultad global
     setGameSpeed(); // Actualizar la velocidad del juego
     showMessage("Difficulty Updated", `Game difficulty set to: ${level}`);
 }
 
-// Muestra el menú principal
+// Muestra el menú de configuración
+function showSettings() {
+    buttonClickSound.play().catch(console.error); // Sonido del botón
+    document.querySelector('.menu').classList.remove('active'); // Oculta el menú principal
+    document.querySelector('.settings-menu').classList.add('active'); // Muestra el menú de configuración
+}
+
 function showMenu() {
     document.querySelector('.game-over-menu').classList.remove('active');
     document.querySelector('.pause-menu').classList.remove('active');
     document.querySelector('.game-container').style.display = 'none';
     document.querySelector('.menu').classList.add('active');
+
+    if (!isMuted) {
+        backgroundMusic.pause(); // Opcional: detener la música en el menú principal
+    }
 }
 
 // Regresa al menú principal desde la configuración
 function backToMenu() {
+    buttonClickSound.play().catch(console.error); // Sonido del botón
     document.querySelector('.menu').classList.add('active');
     document.querySelector('.settings-menu').classList.remove('active');
 }
 
-// Actualiza el estado del juego
 function updateGame() {
     if (isPaused) return;
 
     const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
 
+    // Verificar colisión
     if (head.x < 0 || head.y < 0 || head.x * gridSize >= canvas.width || head.y * gridSize >= canvas.height ||
         snake.some(segment => segment.x === head.x && segment.y === head.y)) {
         endGame();
         return;
     }
 
+    // Comer comida
     if (head.x === food.x && head.y === food.y) {
-        if (!isMuted) eatSound.play(); // Sonido al comer
+        if (!isMuted) eatSound.play();
         apples++;
         score += 10;
         food = generateFood();
-        fps += 1; // Incrementar velocidad
+        fps += 1; // Incrementar FPS
         clearInterval(gameInterval);
         gameInterval = setInterval(updateGame, 1000 / fps);
     } else {
@@ -154,9 +178,16 @@ function updateGame() {
 
     snake.unshift(head);
 
+    // Actualizar el estado de la interfaz
     document.getElementById('score').innerText = score;
     document.getElementById('apples').innerText = apples;
     document.getElementById('time').innerText = Math.floor((Date.now() - startTime) / 1000);
+
+    // Actualizar los FPS
+    const fpsElement = document.getElementById('fps');
+    if (fpsElement) {
+        fpsElement.innerText = fps;
+    }
 
     drawGame();
 }
@@ -168,32 +199,35 @@ function drawGame() {
     snake.forEach(segment => ctx.drawImage(pacmanTexture, segment.x * gridSize, segment.y * gridSize, gridSize * iconSize, gridSize * iconSize));
 }
 
-// Finaliza el juego usando confirm para opciones
 function endGame() {
-    backgroundMusic.pause(); // Pausar la música al terminar el juego
-    if (!isMuted) gameOverSound.play(); // Reproducir sonido de Game Over si no está en mute
+    backgroundMusic.pause();
+    if (!isMuted) gameOverSound.play();
 
-    clearInterval(gameInterval); // Detener el intervalo del juego
+    clearInterval(gameInterval);
 
-    const message = `
-Game Over!
-Your final score: ${score}
-Time survived: ${Math.floor((Date.now() - startTime) / 1000)} seconds
-Apples collected: ${apples}
+    // Destacar el punto de colisión (posición de la cabeza de la serpiente)
+    const head = snake[0]; // La cabeza es el primer elemento
+    ctx.fillStyle = 'red'; // Color para el punto de colisión
+    ctx.beginPath();
+    ctx.arc(
+        head.x * gridSize + gridSize / 2, 
+        head.y * gridSize + gridSize / 2, 
+        gridSize / 2, 
+        0, 
+        2 * Math.PI
+    );
+    ctx.fill();
 
-Would you like to retry the game? (Cancel to return to the main menu)
-    `;
+    // Actualizar el menú de Game Over
+    document.getElementById('finalScore').innerText = score;
+    document.getElementById('finalTime').innerText = Math.floor((Date.now() - startTime) / 1000) + ' s';
+    document.getElementById('finalApples').innerText = apples;
 
-    const retry = confirm(message);
-
-    if (retry) {
-        startGame(); // Reiniciar el juego
-    } else {
-        showMenu(); // Volver al menú principal
-        document.title = "PacSnake - Game";
-        // No reanudar música en el menú principal
-    }
+    // Mostrar el menú de Game Over
+    document.querySelector('.game-over-menu').classList.add('active');
+    document.querySelector('.game-container').style.display = 'block';
 }
+
 
 // Controles del teclado
 document.addEventListener('keydown', event => {
@@ -231,14 +265,9 @@ function resumeGame() {
     document.querySelector('.pause-menu').classList.remove('active');
 }
 
-// Muestra el menú de configuración
-function showSettings() {
-    document.querySelector('.settings-menu').classList.add('active');
-    document.querySelector('.menu').classList.remove('active');
-}
-
 // Función para reiniciar la página (recargar)
 function restartPage() {
+    buttonClickSound.play().catch(console.error); // Sonido del botón
     location.reload(); // Recarga la página, reiniciando todo el estado del juego
 }
 
