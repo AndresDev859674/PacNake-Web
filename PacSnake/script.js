@@ -10,7 +10,6 @@ canvas.height = 480;
 
 // Variables globales
 let backgroundMusic, snake, direction, food, score, apples, startTime, gameInterval, isPaused, difficulty, iconSize, fps, isMuted, toggleState;
-
 // Música y sonidos
 backgroundMusic = new Audio('./Force.mp3');
 backgroundMusic.loop = true;
@@ -31,6 +30,66 @@ notificationSound.volume = 0.7;
 // Inicialización
 isMuted = false;
 toggleState = false;
+
+// Partículas
+let particles = [];
+
+let foodOpacity = 0; // Control de opacidad de la comida
+let foodFadingIn = true; // Flag para saber si está en fade-in
+
+// Función para crear partículas
+function createParticles(x, y) {
+    const particleCount = 30;
+    for (let i = 0; i < particleCount; i++) {
+        particles.push({
+            x: x,
+            y: y,
+            size: Math.random() * 5 + 1,  // Tamaño aleatorio para cada partícula
+            speedX: Math.random() * 2 - 1, // Movimiento aleatorio en el eje X
+            speedY: Math.random() * 2 - 1, // Movimiento aleatorio en el eje Y
+            opacity: Math.random() * 0.5 + 0.5, // Opacidad aleatoria
+        });
+    }
+}
+
+// Función para actualizar las partículas
+function updateParticles() {
+    particles.forEach((particle, index) => {
+        particle.x += particle.speedX;
+        particle.y += particle.speedY;
+        particle.opacity -= 0.02; // Reducir opacidad para desaparecer
+
+        // Eliminar partículas cuando su opacidad llegue a cero
+        if (particle.opacity <= 0) {
+            particles.splice(index, 1);
+        }
+    });
+}
+
+// Función para dibujar las partículas
+function drawParticles() {
+    particles.forEach(particle => {
+        ctx.fillStyle = `rgba(255, 99, 71, ${particle.opacity})`; // Rojo claro (tomato)
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fill();
+    });
+}
+
+// Modificar la función drawFoodWithFade para que use la opacidad correctamente
+function drawFoodWithFade(x, y) {
+    ctx.globalAlpha = foodOpacity; // Aplica la opacidad
+    ctx.drawImage(foodTexture, x * gridSize, y * gridSize, gridSize * iconSize, gridSize * iconSize);
+    ctx.globalAlpha = 1; // Resetea la opacidad
+}
+
+// Cuando la manzana es comida, reinicia la animación de fade
+function onEatFood() {
+    createParticles(food.x * gridSize, food.y * gridSize); // Partículas
+    food = generateFood();
+    foodOpacity = 0; // Resetear opacidad para nuevo fade-in
+    foodFadingIn = true;
+}
 
 function startGame() {
     document.title = "PacSnake - Game In Progress";
@@ -68,11 +127,11 @@ function startGame() {
     gameInterval = setInterval(updateGame, 1000 / fps);
 }
 
-// Configura la velocidad del juego según la dificultad
 function setGameSpeed() {
     const speeds = { easy: 5, normal: 15, hard: 35, expert: 60 };
     fps = speeds[difficulty || 'normal']; // Si no hay dificultad definida, usa 'normal'
 }
+
 
 // Genera la comida en una posición aleatoria
 function generateFood() {
@@ -118,11 +177,44 @@ function toggleIconSize() {
     showMessage("Icon Size Updated", `Icon size set to: ${toggleState ? 'Large' : 'Small'}`);
 }
 
-// Establece la dificultad del juego
 function setDifficulty(level) {
     notificationSound.play().catch(console.error); // Solo notificación
     difficulty = level; // Actualizar la dificultad global
     setGameSpeed(); // Actualizar la velocidad del juego
+
+    // Cambiar la textura de la comida
+    if (level === 'easy') {
+        foodTexture.src = './food_easy.png';
+    } else if (level === 'normal') {
+        foodTexture.src = './food.png';
+    } else if (level === 'hard') {
+        foodTexture.src = './food_demon.png';
+    } else if (level === 'expert') {
+        foodTexture.src = './food_demon.png';
+    }
+
+    // Cambiar la textura de Pac-Man
+    if (level === 'easy') {
+        pacmanTexture.src = './pacman.png';
+    } else if (level === 'normal') {
+        pacmanTexture.src = './pacman.png';
+    } else if (level === 'hard') {
+        pacmanTexture.src = './pacman_hard.png';
+    } else if (level === 'expert') {
+        pacmanTexture.src = './pacman_expert.png';
+    }
+
+    // Cambiar el fondo del juego (actualizando la variable CSS)
+    if (level === 'easy') {
+        document.documentElement.style.setProperty('--foreground-dark', 'url("./background.jpg")');
+    } else if (level === 'normal') {
+        document.documentElement.style.setProperty('--foreground-dark', 'url("./background.jpg")');
+    } else if (level === 'hard') {
+        document.documentElement.style.setProperty('--foreground-dark', 'url("./background_hard.png")');
+    } else if (level === 'expert') {
+        document.documentElement.style.setProperty('--foreground-dark', 'url("./background_expert.gif")');
+    }
+
     showMessage("Difficulty Updated", `Game difficulty set to: ${level}`);
 }
 
@@ -169,14 +261,23 @@ function updateGame() {
         apples++;
         score += 10;
         food = generateFood();
-        fps += 1; // Incrementar FPS
-        clearInterval(gameInterval);
-        gameInterval = setInterval(updateGame, 1000 / fps);
+        foodOpacity = 0; // Resetear opacidad para nuevo fade-in
+        foodFadingIn = true;
+        createParticles(head.x * gridSize, head.y * gridSize); // Generar partículas
     } else {
         snake.pop();
     }
 
     snake.unshift(head);
+
+    // Actualizar opacidad de la comida si está en fade-in
+    if (foodFadingIn) {
+        foodOpacity += 0.05; // Aumenta la opacidad poco a poco
+        if (foodOpacity >= 1) {
+            foodOpacity = 1;
+            foodFadingIn = false; // Detener fade-in
+        }
+    }
 
     // Actualizar el estado de la interfaz
     document.getElementById('score').innerText = score;
@@ -189,19 +290,29 @@ function updateGame() {
         fpsElement.innerText = fps;
     }
 
-    drawGame();
+    drawGame(); // Llama a drawGame, que ahora dibuja la comida con fade
+    updateParticles(); // Actualizar partículas
 }
 
-// Dibuja el estado actual del juego en el canvas
+
 function drawGame() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(foodTexture, food.x * gridSize, food.y * gridSize, gridSize * iconSize, gridSize * iconSize);
+
+    // Dibuja la comida con fade-in
+    drawFoodWithFade(food.x, food.y);
+
+    // Dibuja las partículas
+    drawParticles();
+
+    // Dibuja la serpiente
     snake.forEach(segment => ctx.drawImage(pacmanTexture, segment.x * gridSize, segment.y * gridSize, gridSize * iconSize, gridSize * iconSize));
 }
 
 function endGame() {
     backgroundMusic.pause();
     if (!isMuted) gameOverSound.play();
+
+    document.title = "PacSnake - Game";
 
     clearInterval(gameInterval);
 
