@@ -13,8 +13,11 @@
             <img src="./pacman-icon.png" alt="Pac-Man">
             <h1>PacSnake</h1>
         </div>
+        <p>This game is only played on PC. Sorry</p>
         <button onclick="startGame()">Start Game</button>
         <button onclick="showSettings()">Settings</button>
+        <button onclick="showEvents()">Events</button>
+        <header><button onclick="showBoost()">Boost your Gaming Experience</button></header>
     </div>
 
     <div class="settings-menu">
@@ -41,6 +44,23 @@
         </div>
         <button onclick="backToMenu()">Back</button>
     </div>      
+
+    <div class="boost-menu" id="boostMenu">
+        <h1>Experience freedom with Opera GX</h1>
+        <p>Unlock more ways to make your browser yours with deeper personalization and an expanded modding universe.</p>
+
+        <h2>Make every pixel personal</h2>
+        <p>Match your browser to your setup, your mood or whatever you’re playing with Opera GX.</p>
+    
+        <h2>Custom Themes</h2>
+        <p>Fully customize your color scheme with Opera GX to match your gaming setup. Choose from specially designed themes and easily select GX wallpapers as your in-game background.</p>
+
+        <img src="opera__gx--hero.3682a875dade.webp" alt="Opera GX" style="border-radius: 10px; width: 50%;"> <p>Forget Your Boring Browser</p>
+
+        <button onclick="gxDownload()">Download Now</button>
+        <button onclick="gxInfo()">More Info</button>        
+        <button onclick="backToMenu()">Back</button>
+    </div> 
 
     <div class="game-container">
         <canvas id="gameCanvas"></canvas>

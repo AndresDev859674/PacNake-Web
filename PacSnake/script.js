@@ -10,6 +10,7 @@ canvas.height = 480;
 
 // Variables globales
 let backgroundMusic, snake, direction, food, score, apples, startTime, gameInterval, isPaused, difficulty, iconSize, fps, isMuted, toggleState;
+
 // Música y sonidos
 backgroundMusic = new Audio('./Force.mp3');
 backgroundMusic.loop = true;
@@ -91,12 +92,14 @@ function onEatFood() {
     foodFadingIn = true;
 }
 
+
 function startGame() {
     document.title = "PacSnake - Game In Progress";
 
     document.querySelector('.menu').classList.remove('active');
     document.querySelector('.game-over-menu').classList.remove('active'); // Ocultar Game Over
     document.querySelector('.settings-menu').classList.remove('active');
+    document.querySelector('.boost-menu').classList.remove('active');
     document.querySelector('.game-container').style.display = 'block';
 
     if (!isMuted) {
@@ -132,14 +135,17 @@ function setGameSpeed() {
     fps = speeds[difficulty || 'normal']; // Si no hay dificultad definida, usa 'normal'
 }
 
-
-// Genera la comida en una posición aleatoria
 function generateFood() {
-    return {
-        x: Math.floor(Math.random() * (canvas.width / gridSize)),
-        y: Math.floor(Math.random() * (canvas.height / gridSize)),
-    };
+    let newFoodPosition;
+    do {
+        newFoodPosition = {
+            x: Math.floor(Math.random() * canvas.width / gridSize),
+            y: Math.floor(Math.random() * canvas.height / gridSize)
+        };
+    } while (snake.some(segment => segment.x === newFoodPosition.x && segment.y === newFoodPosition.y));
+    return newFoodPosition;
 }
+
 
 function toggleMute() {
     isMuted = !isMuted;
@@ -225,6 +231,13 @@ function showSettings() {
     document.querySelector('.settings-menu').classList.add('active'); // Muestra el menú de configuración
 }
 
+// Muestra el menú de configuración
+function showBoost() {
+    buttonClickSound.play().catch(console.error); // Sonido del botón
+    document.querySelector('.menu').classList.remove('active'); // Oculta el menú principal
+    document.querySelector('.boost-menu').classList.add('active'); // Muestra el menú de configuración
+}
+
 function showMenu() {
     document.querySelector('.game-over-menu').classList.remove('active');
     document.querySelector('.pause-menu').classList.remove('active');
@@ -241,6 +254,7 @@ function backToMenu() {
     buttonClickSound.play().catch(console.error); // Sonido del botón
     document.querySelector('.menu').classList.add('active');
     document.querySelector('.settings-menu').classList.remove('active');
+    document.querySelector('.boost-menu').classList.remove('active');
 }
 
 function updateGame() {
@@ -294,7 +308,6 @@ function updateGame() {
     updateParticles(); // Actualizar partículas
 }
 
-
 function drawGame() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -342,11 +355,27 @@ function endGame() {
 
 // Controles del teclado
 document.addEventListener('keydown', event => {
-    if (event.key === 'ArrowUp' && direction.y === 0) direction = { x: 0, y: -1 };
-    if (event.key === 'ArrowDown' && direction.y === 0) direction = { x: 0, y: 1 };
-    if (event.key === 'ArrowLeft' && direction.x === 0) direction = { x: -1, y: 0 };
-    if (event.key === 'ArrowRight' && direction.x === 0) direction = { x: 1, y: 0 };
-    if (event.key === 'Escape') {
+    const key = event.key.toLowerCase(); // Asegura compatibilidad con mayúsculas y minúsculas
+
+    // Movimiento hacia arriba
+    if ((key === 'arrowup' || key === 'w') && direction.y === 0) {
+        direction = { x: 0, y: -1 };
+    }
+    // Movimiento hacia abajo
+    if ((key === 'arrowdown' || key === 's') && direction.y === 0) {
+        direction = { x: 0, y: 1 };
+    }
+    // Movimiento hacia la izquierda
+    if ((key === 'arrowleft' || key === 'a') && direction.x === 0) {
+        direction = { x: -1, y: 0 };
+    }
+    // Movimiento hacia la derecha
+    if ((key === 'arrowright' || key === 'd') && direction.x === 0) {
+        direction = { x: 1, y: 0 };
+    }
+    
+    // Pausar el juego con 'Escape'
+    if (key === 'escape') {
         togglePause();
     }
 });
@@ -395,4 +424,18 @@ function showMessage(title, message) {
     setTimeout(() => {
         messageBox.remove();
     }, 3000);
+}
+
+function gxDownload() {
+    window.location.href = "https://www.opera.com/es/computer/thanks?ni=eapgx&os=windows";
+}
+
+function gxInfo() {
+    window.location.href = "https://www.opera.com/en/gx";
+}
+
+// Alterna el tamaño del ícono
+function showEvents() {
+    notificationSound.play().catch(console.error); // Solo notificación
+    showMessage("Sorry", `There is no event for today. Please come back later.`);
 }
