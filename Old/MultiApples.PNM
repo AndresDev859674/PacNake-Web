@@ -1,0 +1,277 @@
+import pygame
+import pygame_menu
+import sys
+import random
+import time
+import os
+import tkinter as tk
+from tkinter import filedialog, messagebox
+import psutil
+from pypresence import Presence
+import tkinter.messagebox as messagebox
+import webbrowser
+import json
+
+os.system("cls")
+
+icono = pygame.image.load("Assets/Main/Game Logo/food_logo.png")
+pygame.display.set_icon(icono)
+
+# Inicializar Pygame
+pygame.init()
+
+# Configuración de la pantalla
+width, height = 600, 400
+surface = pygame.display.set_mode((width, height))
+pygame.display.set_caption("PacNake / MultiApples")
+
+# Colores
+white = (255, 255, 255)
+
+# Cargar imágenes
+background_img = pygame.image.load("Assets/Images/Backgrounds/background.jpg")
+body_img = pygame.image.load("Assets/Images/Skins/pacman.png")
+food_img = pygame.image.load("Assets/Images/Foods/food.png")
+
+# Cargar música predeterminada
+tracks = ["Assets/Sounds/MainMenu.mp3"]
+selected_track = random.choice(tracks)
+print(f"Listening Now: {selected_track}")  # Imprime la pista seleccionada
+
+# Cargar la pista seleccionada
+pygame.mixer.music.load(selected_track)
+
+# Reproducir la música en bucle
+pygame.mixer.music.play(-1)  # -1 significa reproducción en bucle
+
+# Variable para controlar si la música está activada o desactivada
+music_enabled = True
+
+# Tamaño de los bloques
+block_size = 20
+
+# Velocidad de la serpiente
+snake_speed = 15
+
+# Incremento de puntaje por defecto
+score_increment = 10
+
+# Crear un nuevo tema basado en el tema de Game Over
+my_gameover = pygame_menu.themes.THEME_DARK.copy()
+
+# Modificar el estilo del título para que no tenga sombra
+my_gameover.title_font_shadow = False
+
+# Cambiar el color de fondo del menú principal
+my_gameover.background_color = (30, 30, 30)  # Fondo oscuro
+
+# Crear un nuevo tema basado en el tema por defecto
+my_theme = pygame_menu.themes.THEME_DARK.copy()
+
+# Modificar el estilo del título para que no tenga sombra
+my_theme.title_font_shadow = False
+
+# Cambiar el color de fondo del menú principal
+my_theme.background_color = (30, 30, 30)  # Fondo oscuro
+
+# Variable para almacenar el nombre del jugador
+player_name = ""
+
+# Definir la variable global discord_rpc_enabled
+discord_rpc_enabled = False
+
+# Establece el client_id aquí
+client_id = "1200235628781117561"
+RPC = Presence(client_id)
+
+def update_discord_presence():
+    global discord_rpc_enabled
+    if discord_rpc_enabled:
+        RPC.update(
+            details="Playing PacNake",
+            state="In a game",
+            large_image="icon",
+            small_image="food"
+        )
+
+# Función para mostrar la serpiente en la pantalla
+def draw_snake(snake):
+    for segment in snake:
+        surface.blit(body_img, (segment[0], segment[1]))
+
+# Función para mostrar el texto en la pantalla
+def draw_text(text, size, color, x, y):
+    font = pygame.font.SysFont(None, size)
+    render = font.render(text, True, color)
+    surface.blit(render, (x, y))
+
+# Función principal del juego
+def game():
+    global music_enabled, snake_speed, player_name, score, round_num, apples_eaten, start_time
+    start_time = time.time()  # Define start_time al comienzo de la función
+    clock = pygame.time.Clock()
+
+    # Inicializar la serpiente
+    snake = [(width // 2, height // 2)]
+    snake_direction = (block_size, 0)
+
+    # Inicializar la lista de comidas (multiples manzanas)
+    num_apples = 3  # Número de manzanas que deseas tener al mismo tiempo
+    foods = [(random.randrange(0, width - block_size, block_size),
+              random.randrange(0, height - block_size, block_size)) for _ in range(num_apples)]
+
+    # Inicializar el puntaje, número de rondas y manzanas comidas
+    score = 0
+    round_num = 1  # Inicializar el número de ronda
+    apples_eaten = 0
+
+    game_over = False
+    paused = False
+
+    # Configurar la música según la variable de música
+    if music_enabled:
+        pygame.mixer.music.play(-1)
+    else:
+        pygame.mixer.music.stop()
+
+    while not game_over:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_p:
+                    paused = not paused
+                elif event.key == pygame.K_m:
+                    if pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                        pygame.mixer.music.stop()
+                        select_music()
+                    else:
+                        music_enabled = not music_enabled
+                        if music_enabled:
+                            pygame.mixer.music.play(-1)
+                        else:
+                            pygame.mixer.music.stop()
+                        tk.Tk().withdraw()
+                        messagebox.showinfo('Music', 'Music ' + ('enabled' if music_enabled else 'disabled'))
+
+        if paused:
+            draw_text("Paused", 70, white, width // 2 - 100, height // 2 - 30)
+            pygame.display.flip()
+            clock.tick(5)
+            continue
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_UP] and snake_direction != (0, block_size):
+            snake_direction = (0, -block_size)
+        elif keys[pygame.K_DOWN] and snake_direction != (0, -block_size):
+            snake_direction = (0, block_size)
+        elif keys[pygame.K_LEFT] and snake_direction != (block_size, 0):
+            snake_direction = (-block_size, 0)
+        elif keys[pygame.K_RIGHT] and snake_direction != (-block_size, 0):
+            snake_direction = (block_size, 0)
+
+        # Actualizar la posición de la serpiente
+        snake[0] = (snake[0][0] + snake_direction[0], snake[0][1] + snake_direction[1])
+
+        # Verificar colisiones con cada comida
+        for food in foods[:]:
+            if snake[0] == food:
+                snake.append((-block_size, -block_size))
+                foods.remove(food)
+                foods.append((random.randrange(0, width - block_size, block_size),
+                              random.randrange(0, height - block_size, block_size)))
+                score += score_increment
+                apples_eaten += 1
+
+        # Verificar colisiones con los bordes
+        if snake[0][0] < 0 or snake[0][0] >= width or snake[0][1] < 0 or snake[0][1] >= height:
+            game_over = True
+
+        # Verificar colisiones consigo misma
+        for segment in snake[1:]:
+            if snake[0] == segment:
+                game_over = True
+
+        # Mover el cuerpo de la serpiente
+        snake[1:] = snake[:-1]
+
+        # Dibujar en la pantalla
+        surface.blit(background_img, (0, 0))
+        
+        # Dibujar cada comida
+        for food in foods:
+            surface.blit(food_img, food)
+        
+        draw_snake(snake)
+        draw_text(f"Score: {score}", 30, white, 10, 10)
+        draw_text(f"Apples Eaten: {apples_eaten}", 30, white, 10, 40)
+        pygame.display.flip()
+        clock.tick(snake_speed)
+
+    # Mostrar pantalla de Game Over con estadísticas
+    game_over_menu = pygame_menu.Menu('Game Over', 600, 400, theme=my_gameover)
+    game_over_menu.add.label('Statistics')
+    game_over_menu.add.label(f"Score: {score}")
+    game_over_menu.add.label(f"Apples Eaten: {apples_eaten}")
+    game_over_menu.add.button('Play Again', start_the_game)
+    game_over_menu.add.button('Return Main Menu', main_menu)
+    game_over_menu.add.button('Back to PacNake Original', exit_screen)
+    game_over_menu.mainloop(surface)
+
+# Función para iniciar el juego
+def start_the_game():
+    game()
+
+# Función para configurar la dificultad del juego
+def set_difficulty(value, difficulty):
+    global snake_speed, background_img, body_img, food_img, score_increment
+    if difficulty == 1:
+        snake_speed = 15
+        background_img = pygame.image.load("Assets/images/Backgrounds/background.jpg")
+        body_img = pygame.image.load("Assets/images/Skins/pacman.png")
+        food_img = pygame.image.load("Assets/images/Foods/food.png")
+        pygame.mixer.music.load("Assets/Sounds/MainMenu.mp3")
+        score_increment = 10
+
+# Función para iniciar el juego
+def start_the_game():
+    game()  # Llamar a la función principal del juego
+
+# Función para cambiar el volumen de la música
+def change_volume(text, value):
+    try:
+        volume = float(value)  # Convertir el valor ingresado a un flotante
+        pygame.mixer.music.set_volume(volume)  # Establecer el volumen de la música
+        print(f"Volume set to: {volume}")
+    except ValueError:
+        print("Invalid volume value. Using default volume.")  # En caso de que el valor ingresado no sea un flotante
+        pygame.mixer.music.set_volume(0.5)  # Establecer el volumen predeterminado
+
+def configuration_screen():
+    configuration_menu = pygame_menu.Menu('Configuration', 600, 400, theme=my_theme)
+    configuration_menu.add.label('Game Setup')
+    configuration_menu.add.label('----------------------------------------')
+    configuration_menu.add.selector('Volume :', [('0.1', 0.1), ('0.2', 0.2), ('0.3', 0.3), ('0.4', 0.4), ('0.5', 0.5), ('0.6', 0.6), ('0.7', 0.7), ('0.8', 0.8), ('0.9', 0.9), ('1.0', 1.0)], onchange=change_volume)
+    configuration_menu.add.toggle_switch('Discord RPC', False, onchange=toggle_discord_rpc)  # Toggle switch para activar/desactivar el RPC de Discord
+    configuration_menu.add.button('Back to Menu', main_menu)
+    configuration_menu.mainloop(surface)
+
+def exit_screen():
+    exit_menu = pygame_menu.Menu('Back to PacNake Original', 600, 400, theme=my_theme)
+    exit_menu.add.label('Are you sure you want to Back to PacNake Original the game?')
+    exit_menu.add.button('Yes I agree', pygame_menu.events.EXIT)
+    exit_menu.add.button('I do not agree', main_menu)
+    exit_menu.mainloop(surface)
+# Función para el menú principal
+def main_menu():
+    global player_name
+    player_name = ""
+
+    menu = pygame_menu.Menu('Main Menu', 600, 400, theme=my_theme)
+    menu.add.button('Play Game', game)
+    menu.add.button('Back to PacNake Original', exit_screen)
+    menu.mainloop(surface)
+
+if __name__ == '__main__':
+    main_menu()
