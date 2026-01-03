@@ -169,31 +169,6 @@
 </section>
 
 <section class="mods-section">
-    <h2>How Do You Load Mods? 💾</h2>
-    <p class="section-description">The process is straightforward! The system handles all the heavy lifting to ensure your mod runs quickly and safely, but the method differs slightly depending on the format.</p>
-
-    <h3>Loading a Single Script (<code>.PNM</code>)</h3>
-    <p>When you load a single **.PNM** file, the process is direct:</p>
-    <ol>
-        <li>The system reads the **.PNM** file.</li>
-        <li>It temporarily **renames** the file's extension from `.PNM` to the executable `.py` (Python).</li>
-        <li>The script is **executed** by the Python interpreter.</li>
-    </ol>
-    
-    <h3>Loading a Package (<code>.PNMZIP</code>)</h3>
-    <p>The **.PNMZIP** format uses a more robust temporary extraction system:</p>
-    <ol>
-        <li>The system reads the **.PNMZIP** package.</li>
-        <li>All contents of the package are quickly **extracted** to a temporary directory (e.g., `/tmp/PacSnakeMod_uocby15p`).</li>
-        <li>The main **.PNM** script inside the temporary folder is **renamed** to `.py`.</li>
-        <li>The script is **executed**.</li>
-        <li>Once the mod finishes running or the game session ends, the entire temporary directory is **deleted** to clean up the system.</li>
-    </ol>
-
-    <p class="example-text"><strong>Example Cleanup:</strong> Cleaned up temporary directory: <code>/tmp/PacSnakeMod_uocby15p</code></p>
-</section>
-
-<section class="mods-section">
     <h2>Custom Assets 🖼️</h2>
     <p class="section-description">Mods have the flexibility to use the **original game's assets** or introduce **entirely custom assets** like images, sounds, or custom code libraries.</p>
 
